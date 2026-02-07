@@ -27,14 +27,14 @@ env/
 .venv
 
 # Variáveis de ambiente
-.env
-.env.local
+#.env
+#.env.local
 
 # Banco de dados
-*.db
-*.sqlite
-*.sqlite3
-instance/
+#*.db
+#*.sqlite
+#*.sqlite3
+#instance/
 
 # IDEs
 .vscode/
@@ -52,7 +52,7 @@ Thumbs.db
 logs/
 
 # Flask
-instance/
+#instance/
 .webassets-cache
 
 # Pytest
