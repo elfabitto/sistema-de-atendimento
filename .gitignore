@@ -27,8 +27,8 @@ env/
 .venv
 
 # Variáveis de ambiente
-.env
-.env.local
+#.env
+#.env.local
 
 # Banco de dados
 #*.db
