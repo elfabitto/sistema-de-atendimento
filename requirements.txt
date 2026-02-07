@@ -1,0 +1,32 @@
+# Framework Web
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Banco de Dados
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+
+# Autenticação
+Flask-Login==0.6.3
+
+# Tempo Real (WebSockets)
+Flask-SocketIO==5.3.6
+python-socketio==5.11.0
+
+# Servidor ASGI para SocketIO
+eventlet==0.35.2
+
+# Agendamento de Tarefas
+APScheduler==3.10.4
+
+# Variáveis de Ambiente
+python-dotenv==1.0.0
+
+# Utilitários
+email-validator==2.1.0
+
+# Banco de Dados PostgreSQL (para produção)
+psycopg2-binary==2.9.9
+
+# Segurança
+cryptography==41.0.7

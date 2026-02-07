@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Estatísticas - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Cabeçalho -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <i class="fas fa-chart-bar mr-2"></i>
+            Estatísticas
+        </h1>
+        <p class="mt-1 text-sm text-gray-600">
+            Visualize o desempenho geral do sistema e dos colaboradores.
+        </p>
+    </div>
+
+    <!-- Estatísticas Gerais -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-globe mr-2"></i>
+            Estatísticas Gerais do Sistema
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Total de Solicitações</p>
+                <p class="text-3xl font-bold text-blue-600">{{ stats_gerais.total_solicitacoes }}</p>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Atendimentos Concluídos</p>
+                <p class="text-3xl font-bold text-green-600">{{ stats_gerais.total_concluidos }}</p>
+            </div>
+            
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Solicitações Pendentes</p>
+                <p class="text-3xl font-bold text-yellow-600">{{ stats_gerais.total_pendentes }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking de Colaboradores -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-trophy mr-2"></i>
+            Ranking de Colaboradores
+        </h2>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Posição
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Colaborador
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Atendimentos
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Pulados
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tempo Médio
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in ranking %}
+                    <tr class="{% if item.colaborador.id == current_user.id %}bg-blue-50{% endif %}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-2xl font-bold text-gray-900">{{ loop.index }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ item.colaborador.nome }}
+                                        {% if item.colaborador.id == current_user.id %}
+                                            <span class="text-blue-600">(Você)</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ item.colaborador.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                {{ item.total_atendimentos }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ item.total_pulados }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ item.tempo_medio }} min
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Histórico Recente -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-history mr-2"></i>
+            Histórico Recente de Atendimentos
+        </h2>
+        
+        <div class="space-y-3">
+            {% for atendimento in historico %}
+            <div class="border-l-4 {% if atendimento.status == 'concluido' %}border-green-500{% elif atendimento.status == 'pulado' %}border-yellow-500{% else %}border-red-500{% endif %} pl-4 py-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-medium text-gray-900">
+                            {{ atendimento.colaborador.nome }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            {{ atendimento.solicitacao.descricao[:100] }}{% if atendimento.solicitacao.descricao|length > 100 %}...{% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-clock mr-1"></i>
+                            {{ atendimento.fim.strftime('%d/%m/%Y %H:%M') }} - 
+                            Duração: {{ atendimento.get_duracao_minutos() }} min
+                        </p>
+                    </div>
+                    <div>
+                        {% if atendimento.status == 'concluido' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-check mr-1"></i> Concluído
+                            </span>
+                        {% elif atendimento.status == 'pulado' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-forward mr-1"></i> Pulado
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                <i class="fas fa-clock mr-1"></i> Timeout
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

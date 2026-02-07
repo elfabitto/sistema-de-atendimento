@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Cabeçalho -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <i class="fas fa-tachometer-alt mr-2"></i>
+            Dashboard
+        </h1>
+        <p class="mt-1 text-sm text-gray-600">
+            Bem-vindo, {{ current_user.nome }}! Gerencie sua fila de atendimento.
+        </p>
+    </div>
+
+    <!-- Cards de Estatísticas Rápidas -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Atendimentos Concluídos
+                            </dt>
+                            <dd class="text-2xl font-semibold text-gray-900" id="total-atendimentos">
+                                {{ estatisticas.total_atendimentos }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-blue-500 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Tempo Médio
+                            </dt>
+                            <dd class="text-2xl font-semibold text-gray-900" id="tempo-medio">
+                                {{ estatisticas.tempo_medio_minutos }} min
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-forward text-yellow-500 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Atendimentos Pulados
+                            </dt>
+                            <dd class="text-2xl font-semibold text-gray-900" id="total-pulados">
+                                {{ estatisticas.total_pulados }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-purple-500 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Na Fila
+                            </dt>
+                            <dd class="text-2xl font-semibold text-gray-900" id="total-fila">
+                                {{ fila|length }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Coluna Esquerda: Controles e Fila -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Controles de Fila -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-sliders-h mr-2"></i>
+                    Controles
+                </h2>
+                
+                <div class="space-y-4">
+                    {% if not current_user.esta_disponivel %}
+                        <button id="btn-entrar-fila" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 flex items-center justify-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Entrar na Fila
+                        </button>
+                    {% else %}
+                        <button id="btn-sair-fila" 
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 flex items-center justify-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Sair da Fila
+                        </button>
+                    {% endif %}
+                    
+                    <button id="btn-nova-solicitacao" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 flex items-center justify-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Nova Solicitação
+                    </button>
+                </div>
+                
+                <!-- Status Atual -->
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-700">Status:</p>
+                    <p class="text-lg font-semibold" id="status-atual">
+                        {% if current_user.esta_em_atendimento %}
+                            <span class="text-yellow-600"><i class="fas fa-headset mr-1"></i> Em Atendimento</span>
+                        {% elif current_user.esta_disponivel %}
+                            <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Disponível na Fila</span>
+                        {% else %}
+                            <span class="text-gray-600"><i class="fas fa-pause-circle mr-1"></i> Fora da Fila</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Atendimento Atual -->
+            {% if atendimento_atual %}
+            <div id="atendimento-atual" class="bg-yellow-50 border-2 border-yellow-400 shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-headset mr-2 text-yellow-600"></i>
+                    Atendimento em Andamento
+                </h2>
+                
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Cliente:</p>
+                        <p class="text-lg">{{ atendimento_atual.solicitacao.cliente_nome or 'Não informado' }}</p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Telefone:</p>
+                        <p class="text-lg">{{ atendimento_atual.solicitacao.cliente_telefone or 'Não informado' }}</p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Descrição:</p>
+                        <p class="text-base">{{ atendimento_atual.solicitacao.descricao }}</p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Tempo decorrido:</p>
+                        <p class="text-lg font-semibold text-yellow-600" id="tempo-atendimento">
+                            {{ atendimento_atual.get_duracao_minutos() }} minutos
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-4">
+                        <button onclick="finalizarAtendimento({{ atendimento_atual.solicitacao_id }})"
+                                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                            <i class="fas fa-check mr-2"></i>
+                            Encerrar
+                        </button>
+                        <button onclick="pularAtendimento({{ atendimento_atual.solicitacao_id }})"
+                                class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                            <i class="fas fa-forward mr-2"></i>
+                            Pular
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Fila de Colaboradores -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-list-ol mr-2"></i>
+                    Fila de Atendimento
+                </h2>
+                
+                <div id="lista-fila" class="space-y-2">
+                    {% if fila %}
+                        {% for colaborador in fila %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg {% if colaborador.id == current_user.id %}border-2 border-blue-500{% endif %}">
+                            <div class="flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full font-bold mr-3">
+                                    {{ colaborador.posicao_fila }}
+                                </span>
+                                <div>
+                                    <p class="font-medium text-gray-900">
+                                        {{ colaborador.nome }}
+                                        {% if colaborador.id == current_user.id %}
+                                            <span class="text-blue-600 text-sm">(Você)</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        {% if colaborador.esta_em_atendimento %}
+                                            <i class="fas fa-headset text-yellow-500"></i> Em atendimento
+                                        {% else %}
+                                            <i class="fas fa-check-circle text-green-500"></i> Disponível
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-gray-500 py-4">
+                            <i class="fas fa-inbox text-4xl mb-2"></i><br>
+                            Nenhum colaborador na fila
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Solicitações Pendentes -->
+        <div class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-inbox mr-2"></i>
+                    Solicitações Pendentes
+                </h2>
+                
+                <div id="lista-solicitacoes" class="space-y-3">
+                    {% if solicitacoes_pendentes %}
+                        {% for solicitacao in solicitacoes_pendentes %}
+                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ solicitacao.cliente_nome or 'Cliente não informado' }}
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                {{ solicitacao.descricao[:80] }}{% if solicitacao.descricao|length > 80 %}...{% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-clock mr-1"></i>
+                                {{ solicitacao.criado_em.strftime('%d/%m/%Y %H:%M') }}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-gray-500 py-4">
+                            <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i><br>
+                            Nenhuma solicitação pendente
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nova Solicitação -->
+<div id="modal-nova-solicitacao" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    Nova Solicitação
+                </h3>
+                
+                <form id="form-nova-solicitacao" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nome do Cliente</label>
+                        <input type="text" id="cliente-nome" 
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Telefone</label>
+                        <input type="text" id="cliente-telefone" 
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Descrição *</label>
+                        <textarea id="descricao" rows="4" required
+                                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="criarSolicitacao()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    <i class="fas fa-check mr-2"></i>
+                    Criar
+                </button>
+                <button type="button" onclick="fecharModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Variáveis globais
+    const socket = io();
+    let atendimentoAtualId = {{ atendimento_atual.solicitacao_id if atendimento_atual else 'null' }};
+    
+    // Conexão Socket.IO
+    socket.on('connect', function() {
+        console.log('Conectado ao servidor');
+    });
+    
+    // Função para atualizar dados via AJAX sem recarregar
+    function atualizarDashboard() {
+        fetch('/dashboard')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Atualiza estatísticas
+                const novoTotal = doc.querySelector('#total-atendimentos');
+                if (novoTotal) document.querySelector('#total-atendimentos').textContent = novoTotal.textContent;
+                
+                const novoTempo = doc.querySelector('#tempo-medio');
+                if (novoTempo) document.querySelector('#tempo-medio').textContent = novoTempo.textContent;
+                
+                const novoPulados = doc.querySelector('#total-pulados');
+                if (novoPulados) document.querySelector('#total-pulados').textContent = novoPulados.textContent;
+                
+                const novoFila = doc.querySelector('#total-fila');
+                if (novoFila) document.querySelector('#total-fila').textContent = novoFila.textContent;
+                
+                // Atualiza lista da fila
+                const novaListaFila = doc.querySelector('#lista-fila');
+                if (novaListaFila) document.querySelector('#lista-fila').innerHTML = novaListaFila.innerHTML;
+                
+                // Atualiza solicitações pendentes
+                const novasSolicitacoes = doc.querySelector('#lista-solicitacoes');
+                if (novasSolicitacoes) document.querySelector('#lista-solicitacoes').innerHTML = novasSolicitacoes.innerHTML;
+                
+                // Atualiza status
+                const novoStatus = doc.querySelector('#status-atual');
+                if (novoStatus) document.querySelector('#status-atual').innerHTML = novoStatus.innerHTML;
+                
+                // Atualiza botões de controle
+                const novosControles = doc.querySelector('.space-y-4');
+                const controlesAtuais = document.querySelector('.space-y-4');
+                if (novosControles && controlesAtuais) {
+                    controlesAtuais.innerHTML = novosControles.innerHTML;
+                    // Re-adiciona event listeners
+                    document.getElementById('btn-entrar-fila')?.addEventListener('click', entrarNaFila);
+                    document.getElementById('btn-sair-fila')?.addEventListener('click', sairDaFila);
+                    document.getElementById('btn-nova-solicitacao')?.addEventListener('click', abrirModalNovaSolicitacao);
+                }
+                
+                // NOVO: Atualiza seção de "Atendimento Atual"
+                const novoAtendimento = doc.querySelector('#atendimento-atual');
+                const atendimentoAtual = document.querySelector('#atendimento-atual');
+                const container = document.querySelector('.lg\\:col-span-2 .space-y-6');
+                
+                if (novoAtendimento && atendimentoAtual) {
+                    // Atualiza atendimento existente
+                    atendimentoAtual.outerHTML = novoAtendimento.outerHTML;
+                    console.log('Atendimento atualizado');
+                } else if (novoAtendimento && !atendimentoAtual && container) {
+                    // Adiciona seção de atendimento se não existir
+                    // Insere após o primeiro elemento (controles)
+                    if (container.children.length > 0) {
+                        container.children[0].insertAdjacentElement('afterend', novoAtendimento);
+                    } else {
+                        container.appendChild(novoAtendimento);
+                    }
+                    console.log('Atendimento adicionado');
+                } else if (!novoAtendimento && atendimentoAtual) {
+                    // Remove seção de atendimento se não houver mais
+                    atendimentoAtual.remove();
+                    console.log('Atendimento removido');
+                }
+            })
+            .catch(error => console.error('Erro ao atualizar dashboard:', error));
+    }
+    
+    // Eventos Socket.IO - Atualiza dinamicamente SEM recarregar
+    socket.on('atualizar_fila', function(data) {
+        console.log('Fila atualizada:', data);
+        Utils.showNotification('Fila atualizada!', 'info');
+        atualizarDashboard();
+    });
+    
+    socket.on('nova_solicitacao_recebida', function(data) {
+        mostrarNotificacaoAtendimento(data);
+        Utils.showNotification('Nova solicitação recebida!', 'info');
+        atualizarDashboard();
+    });
+    
+    socket.on('entrou_fila', function(data) {
+        Utils.showNotification(data.mensagem, 'success');
+        atualizarDashboard();
+    });
+    
+    socket.on('saiu_fila', function(data) {
+        Utils.showNotification(data.mensagem, 'info');
+        atualizarDashboard();
+    });
+    
+    socket.on('atendimento_iniciado', function(data) {
+        Utils.showNotification('Atendimento iniciado!', 'success');
+        atualizarDashboard();
+    });
+    
+    socket.on('atendimento_finalizado', function(data) {
+        Utils.showNotification('Atendimento finalizado!', 'success');
+        atualizarDashboard();
+    });
+    
+    socket.on('erro', function(data) {
+        Utils.showNotification(data.mensagem, 'error');
+    });
+    
+    // Funções
+    function entrarNaFila() {
+        socket.emit('entrar_fila');
+        Utils.showNotification('Entrando na fila...', 'info');
+        setTimeout(() => atualizarDashboard(), 500);
+    }
+    
+    function sairDaFila() {
+        if (confirm('Tem certeza que deseja sair da fila?')) {
+            socket.emit('sair_fila');
+            Utils.showNotification('Saindo da fila...', 'info');
+            setTimeout(() => atualizarDashboard(), 500);
+        }
+    }
+    
+    function abrirModalNovaSolicitacao() {
+        document.getElementById('modal-nova-solicitacao').classList.remove('hidden');
+    }
+    
+    function fecharModal() {
+        document.getElementById('modal-nova-solicitacao').classList.add('hidden');
+        document.getElementById('form-nova-solicitacao').reset();
+    }
+    
+    function criarSolicitacao() {
+        const descricao = document.getElementById('descricao').value;
+        const clienteNome = document.getElementById('cliente-nome').value;
+        const clienteTelefone = document.getElementById('cliente-telefone').value;
+        
+        if (!descricao) {
+            Utils.showNotification('Descrição é obrigatória', 'error');
+            return;
+        }
+        
+        console.log('Criando solicitação...');
+        
+        socket.emit('nova_solicitacao', {
+            descricao: descricao,
+            cliente_nome: clienteNome,
+            cliente_telefone: clienteTelefone
+        });
+        
+        fecharModal();
+        Utils.showNotification('Solicitação criada! Atualizando em 2 segundos...', 'success');
+        
+        console.log('Agendando reload em 2 segundos...');
+        
+        // Recarrega a página após 2 segundos para garantir que o backend processou
+        setTimeout(function() {
+            console.log('Executando reload agora!');
+            window.location.reload(true);
+        }, 2000);
+    }
+    
+    function finalizarAtendimento(solicitacaoId) {
+        if (confirm('Confirma o encerramento deste atendimento?')) {
+            socket.emit('finalizar_atendimento', {
+                solicitacao_id: solicitacaoId
+            });
+            Utils.showNotification('Atendimento finalizado!', 'success');
+            setTimeout(() => atualizarDashboard(), 500);
+        }
+    }
+    
+    function pularAtendimento(solicitacaoId) {
+        if (confirm('Tem certeza que deseja pular este atendimento?')) {
+            socket.emit('pular_atendimento', {
+                solicitacao_id: solicitacaoId
+            });
+            Utils.showNotification('Atendimento pulado!', 'info');
+            setTimeout(() => atualizarDashboard(), 500);
+        }
+    }
+    
+    function atualizarListaFila(fila) {
+        // Atualiza a lista de colaboradores na fila
+        console.log('Fila atualizada:', fila);
+        // Recarrega apenas se necessário
+    }
+    
+    function atualizarBotoesFila(naFila) {
+        console.log('Status da fila atualizado:', naFila);
+        // Recarrega apenas se necessário
+    }
+    
+    function mostrarNotificacaoAtendimento(data) {
+        if (Notification.permission === 'granted') {
+            new Notification('Nova Solicitação!', {
+                body: data.descricao,
+                icon: '/static/icon.png'
+            });
+        }
+        console.log('Nova solicitação recebida:', data);
+    }
+    
+    function mostrarMensagem(mensagem, tipo) {
+        alert(mensagem);
+    }
+    
+    // Event Listeners
+    document.getElementById('btn-entrar-fila')?.addEventListener('click', entrarNaFila);
+    document.getElementById('btn-sair-fila')?.addEventListener('click', sairDaFila);
+    document.getElementById('btn-nova-solicitacao').addEventListener('click', abrirModalNovaSolicitacao);
+    
+    // Solicita permissão para notificações
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+</script>
+{% endblock %}
